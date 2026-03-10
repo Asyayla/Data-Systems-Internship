@@ -73,7 +73,7 @@ INSERT INTO DersKayitlari VALUES
 (21, 2, 51, '2024-11-11');
 
 
---3.1
+--3.1 ogrenci transkript raporu
 DECLARE @ogrenci_id INT = NULL --bir parametre(değişken) tanimlanir 
 
 SELECT O.ad, O.soyad, B.bolum_adi, D.ders_adi, N.vize, N.final,
@@ -95,16 +95,14 @@ JOIN Bolumler B ON B.bolum_id = O.bolum_id
 JOIN DersKayitlari DK ON DK.ogrenci_id = O.ogrenci_id
 JOIN Dersler D ON D.ders_id = DK.ders_id  
 LEFT JOIN Notlar N ON N.ogrenci_id = O.ogrenci_id AND N.ders_id = D.ders_id   --left join çünkü kayitli olmayan dersler de listelenecek  
-
---WHERE (O.ogrenci_id IS NULL OR O.ogrenci_id = @ogrenci_id)
 ORDER BY O.ogrenci_id, D.ders_id;
 
 
---3.2
+--3.2 bolum basari raporu
 SELECT B.bolum_adi,
 COUNT(DISTINCT O.ogrenci_id) AS toplam_ogrenci, --bolumdeki toplam ogrenci sayisi distinct ile tek defa sayiliyor 
-COUNT(DISTINCT DK.ogrenci_id) AS ders_alan_ogrenci, --en az bir ders kaydi olan ogrenci sayisi ders almayan sayilmaz
-CAST(AVG(T.ogr_ortalama) AS DECIMAL(5, 2)) AS bolum_ortalama, --bolumdeki ogrencilerin genel not ortalamasi T ogrencilerin bireysel ortalamalarinin olduğu alt sorgu cast kusuratli sonuc ver 
+COUNT(DISTINCT DK.ogrenci_id) AS ders_alan_ogrenci, --en az bir ders kaydi olan ogrenci sayisi, ders almayan sayilmaz
+CAST(AVG(T.ogr_ortalama) AS DECIMAL(5, 2)) AS bolum_ortalama, --bolumdeki ogrencilerin genel not ortalamasi, T ogrencilerin bireysel ortalamalarinin olduğu alt sorgu, cast kusuratli sonuc ver 
 
 MAX( -- en basarili ogrenciyi bulma kismi
     CASE 
@@ -115,7 +113,7 @@ MAX( -- en basarili ogrenciyi bulma kismi
 CAST(MAX(M.max_ortalama) AS DECIMAL(5, 2)) AS en_yuksek_ortalama --bolumun en yuksek ortalamasi 
 
 FROM Bolumler B --her sey bolumden basliyor
-LEFT JOIN Ogrenciler O ON O.bolum_id = B.bolum_id --bolum -> ogrencileri bagla left join ogrencisi olmayan bolum de listelensin
+LEFT JOIN Ogrenciler O ON O.bolum_id = B.bolum_id --bolum -> ogrencileri bagla, left join cunku ogrencisi olmayan bolum de listelensin
 LEFT JOIN DersKayitlari DK ON DK.ogrenci_id = O.ogrenci_id --ogrenciler -> aldigi dersler 
 LEFT JOIN( --her ogrencinin ortalamasini hesapliyor 
     SELECT ogrenci_id, AVG(vize * 0.4 + final * 0.6) AS ogr_ortalama
@@ -137,7 +135,7 @@ LEFT JOIN( --bolumun en yuksek ortalamasi
 GROUP BY B.bolum_adi --her sey bolum bazli gruplaniyor
 ORDER BY bolum_ortalama DESC; --en basarili bolum ustte
 
---3.3
+--3.3 ders bazli analiz
 -- dersi alan ogrenci sayisi
 --ortalama not
 --basari orani(gecen ogrenci yuzdesi)
@@ -156,7 +154,7 @@ LEFT JOIN DersKayitlari DK ON DK.ders_id = D.ders_id
 LEFT JOIN Notlar N ON N.ogrenci_id = DK.ogrenci_id  AND N.ders_id = DK.ders_id
 GROUP BY D.ders_adi;
 
---4
+--4 stored procedure gorevi
 --belirtilen bolumdeki ortalamasi verilen degerin uzerinde olan ogrencileri listelemelidir
 --join group by, having case when kullanimi zorunlu 
 --ogrenci bolum notlar 
@@ -190,7 +188,7 @@ GO
 --Final notu olmayan ogrenci ortalamasi yalnizca vize notuna göre hesaplanacagi icin 100 alsa dahi 40 puan getirisi olacak 40<50 den de kalmis olacak
 
 --2 Hic ders almayan ogrenci raporlara dahil edilmeli mi? 
---Edilmemelidir çünkü derste kaydi yok notu  yok dahil edilmesinin hiçbir getirisi yok
+--Edilmemelidir çünkü derste kaydi yok notu yok, dahil edilmesinin hiçbir getirisi yok
 
 --3 Ortalama hesaplamasi sorguda mi, view'da mi yapilmalidir? Neden?
 -- view tekrar tekrar kullanilan sorgulari tek bir yerde toblo gibi tutup kullanmamizi sağlar. Bu sorgu için de ortalama hesaplama kismini view olarak yazarsak 
