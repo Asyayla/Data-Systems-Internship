@@ -198,8 +198,6 @@ GO
 --6
 --vw_OgrenciNotOrtalamalari adli bir view oluştur 
 --notlar ve ders kayitlari tablolari için uygun indexlerin yazilmasi
---index neden kullanildi? sorusunun açiklanmasi
-
 CREATE VIEW vw_OgrenciNotOrtalamalari AS
 SELECT O.ogrenci_id, O.ad, O.soyad, AVG(N.vize * 0.4 + N.final * 0.6) AS ortalama
 FROM Ogrenciler O
