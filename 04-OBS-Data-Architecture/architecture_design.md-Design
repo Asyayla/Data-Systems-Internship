@@ -1,0 +1,65 @@
+# OBS Seviye 4 – Veri Mimarisi Tasarım Raporu
+
+Bu rapor, 1.000.000 öğrenci ve 20.000.000+ not kaydı içeren yüksek hacimli bir Öğrenci Bilgi Sistemi'nin (OBS); [cite_start]ölçeklenebilirlik, performans ve veri mimarisi stratejilerini kapsamaktadır[cite: 691, 781].
+
+
+
+## 1. Giriş
+* [cite_start]Sistem, günlük yaklaşık 50.000 yeni not girişi ile hızla büyüyen bir veri setine sahiptir[cite: 691, 781].
+* [cite_start]Mevcut sistemde analitik sorguların (dashboard) büyük veri üzerinde çalışması CPU kullanımını ve Disk I/O yükünü artırarak sistem kaynakları üzerinde baskı oluşturmaktadır[cite: 692, 693].
+* [cite_start]Ana problem, "read-heavy" analitik yükün ve aggregate işlemlerinin (GROUP BY maliyeti) sistem performansını düşürmesidir[cite: 694, 695, 705, 706].
+* [cite_start]Bu sebeple, transactional (OLTP) ve analitik (OLAP) sistemlerin birbirinden ayrılması sürdürülebilirlik için zorunludur[cite: 699, 701, 702, 703].
+
+## 2. Mevcut Sistem Problemleri
+* [cite_start]**Read-heavy analytics load:** Okuma ve hesaplama odaklı analitik yükün fazlalığı[cite: 695, 705].
+* [cite_start]**Aggregate maliyeti:** Çok sayıda satır üzerinde yapılan toplama işlemlerinin yüksek maliyeti[cite: 694, 706].
+* [cite_start]**Kaynak Contention:** Aynı kaynakların farklı işlemler için çakışması[cite: 700, 707].
+* [cite_start]**OLTP ve OLAP çakışması:** İşlem ve analiz sistemlerinin bir arada çalışması[cite: 700, 708].
+* [cite_start]**Gelecek büyüme hacmi:** 5 yıl içinde tahmini 90 milyon ek kayıt beklentisi[cite: 697, 709].
+
+## 3. Ölçeklendirme (Scaling) Stratejisi
+* [cite_start]Sistemin çökmemesi ve hızlı kalması için **Horizontal (Yatay) Scaling** tercih edilecektir[cite: 712, 714, 716].
+* [cite_start]**Yatay Ölçeklendirme:** Veri yaklaşık 10 sunucuya dağıtılarak sunucu yedekliliği sağlanır ve sistemin bir bütün olarak çökmesi engellenir[cite: 716].
+* [cite_start]**Okuma/Yazma Ayrımı:** Yazma işlemleri (not girişi) bir sunucuya, okuma ve raporlama işlemleri (dashboard) başka sunuculara dağıtılarak kaynak çakışması önlenir[cite: 717, 718, 719, 720].
+
+
+
+[Image of horizontal vs vertical scaling]
+
+
+## 4. Partition (Bölümleme) Tasarımı
+* [cite_start]Veriye erişimi hızlandırmak için tüm veriyi parçalara ayırarak **Karma (Hybrid) Partitioning** uygulanacaktır[cite: 722, 728].
+* [cite_start]**Hybrid Model:** Veriler önce yıllara (Range), ardından bölümlere (List) göre alt bölümlere ayrılır (Örn: 2025 yılı Mühendislik Fakültesi verisi)[cite: 729].
+* [cite_start]**Avantaj:** Hem güncel veriye hem de bölüme en hızlı erişim bu modelle sağlanarak dashboard performansı maksimize edilir[cite: 730, 731].
+
+## 5. Aktif/Pasif Veri Yönetimi
+* [cite_start]Veritabanı her sorguda tüm veriyi taramak yerine, verinin değerine göre ayrım yapar[cite: 733, 738].
+* [cite_start]**Aktif Veri (Hot Data):** Mevcut öğrenciler ve son 1-2 yılın kayıtları yüksek performanslı SSD'lerde saklanır[cite: 734, 735].
+* [cite_start]**Pasif Veri (Cold Data):** Mezunlar ve geçmiş yılların kayıtları daha ucuz ve yavaş HDD'lerde tutulur[cite: 736, 737].
+
+## 6. Arşiv Stratejisi
+* [cite_start]Pasif verilerin canlı sistemden çıkarılma sürecidir[cite: 740].
+* [cite_start]Örneğin, 5 yıldan eski tüm notlar ana tablodan silinerek `Notlar_arsiv` gibi ayrı bir tabloya taşınır[cite: 741].
+* [cite_start]Bu işlem ana veritabanının boyutunu küçük tutarak yedekleme (backup) sürelerini kısaltır ve performans kaybını önler[cite: 742].
+
+## 7. Dashboard Performans Çözümü
+* [cite_start]20 milyon satırı anlık hesaplamak sistemi kilitleyeceği için şu yöntemler kullanılır[cite: 744, 745]:
+* [cite_start]**Materialized View:** Sorgu sonucu önceden hesaplanıp fiziksel bir tabloya kaydedilir (gecikmeli raporlar için uygundur)[cite: 746, 750, 771].
+* [cite_start]**Aggregation Tables:** Not girişi yapıldığı anda güncellenen, anlık takip sağlayan özet tablolardır[cite: 747, 748, 749, 750].
+* [cite_start]**Cache:** Çok sık sorulan soruların cevabı RAM (Redis gibi) üzerinde tutularak veritabanına gidiş azaltılır[cite: 751].
+
+## 8. Index Stratejisi
+* [cite_start]**Sınırlı ve Stratejik Kullanım:** Her sütuna değil, sadece sık kullanılan `ogrenci_id`, `ders_id`, `bolum` gibi alanlara indeks eklenir[cite: 756, 757].
+* [cite_start]**Composite Index:** Sık kullanılan ikili kombinasyonlar için (Örn: `ogrenci_id` + `donem`) tek indeks oluşturulur[cite: 757, 769].
+* [cite_start]**Covering Index:** Sorgu sonucunun direkt indeksten alınması sağlanarak okuma hızı maksimize edilir[cite: 758].
+
+## 9. Veri Bütünlüğü vs Performans Trade-off
+* [cite_start]**Bütünlük Öncelikli İşlemler:** Not girişi ve mezuniyet durumlarında Foreign Key ve Transaction kullanımı zorunludur[cite: 760, 761, 762].
+* [cite_start]**Performans Öncelikli İşlemler:** Dashboard raporlarında hız için bütünlükten bir miktar ödün verilerek özet tablolar (Aggregation tables) üzerinden okuma yapılır[cite: 763].
+* [cite_start]**Kontrol Kaydırma:** Veritabanı üzerindeki yükü azaltmak için bazı kısıtlamalar veritabanı katmanından alınıp Uygulama (Application) katmanına taşınır[cite: 764, 766, 767].
+
+## 10. Sonuç ve Önerilen Mimari
+* [cite_start]**Ölçeklenebilir yapı:** Sistem artan veri yükünü karşılamak adına Yatay Ölçekleme ve Okuma/Yazma Ayrımı (Master-Slave Replication) üzerine inşa edilecektir[cite: 774].
+* [cite_start]**Veri Yönetimi:** 10 yıllık veri geçmişi Karma Partitioning ve Aktif/Pasif Veri Ayrımı ile yönetilerek ana tablonun şişmesi engellenecek[cite: 775].
+* [cite_start]**Raporlama Çözümü:** Yönetimin gerçek zamanlı dashboard talebi Materialized View ve Aggregation Tabloları üzerinden yanıt verecektir[cite: 776].
+* [cite_start]**Teknik vizyon:** Bu mimari gelecekteki 100 milyonluk veri setini de sorunsuz ve düşük maliyetle yönetebilecek kapasitededir[cite: 777].
