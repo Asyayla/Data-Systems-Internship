@@ -52,7 +52,7 @@ VALUES(1, 'Yazılım Mühendisliği', 'Mühendislik Fakültesi');
 
 INSERT INTO Ogrenciler(ogrenci_id, ad, soyad, bolum_id, kayit_tarihi)
 VALUES 
-(100, 'Asya', 'Yayla', 1, '2022-09-17’);
+(100, 'Asya', 'Yayla', 1, '2022-09-17');
 
 INSERT INTO Dersler(ders_id, ders_adi, bolum_id)
 VALUES(50, 'Operating System', 1);
