@@ -1,5 +1,6 @@
-/* Proje: Öğrenci Bilgi Sistemi (OBS) Gelişmiş Raporlama Projesi 
-Açıklama: Ders kayıt sistemi entegrasyonu, Stored Procedure, View yapıları ve gelişmiş başarı analizleri.
+/* 
+    Proje: Öğrenci Bilgi Sistemi (OBS) Gelişmiş Raporlama Projesi 
+    Açıklama: Ders kayıt sistemi entegrasyonu, Stored Procedure, View yapıları ve gelişmiş başarı analizleri.
 */
 
 USE master
