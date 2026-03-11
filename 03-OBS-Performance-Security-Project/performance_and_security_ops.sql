@@ -1,4 +1,5 @@
-/* Proje: OBS Seviye 3 – Performans ve Yetkilendirme Projesi
+/* 
+  Proje: OBS Seviye 3 – Performans ve Yetkilendirme Projesi
   Dosya: performance_and_security_ops.sql
   Açıklama: Veri bütünlüğü (Triggers), Güvenlik (Roles/Views) ve Performans (Indexing) optimizasyonları.
 */
