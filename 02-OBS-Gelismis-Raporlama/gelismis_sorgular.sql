@@ -60,7 +60,7 @@ INSERT INTO Bolumler VALUES
 
 INSERT INTO Ogrenciler VALUES
 (1, 'Asya', 'Yayla', 100, '2022-09-17'),
-(2, ‘Ayşe’, ‘Yılmaz’, 101, '2023-09-17');
+(2, 'Ayşe', 'Yılmaz', 101, '2023-09-17');
 
 INSERT INTO Dersler VALUES
 (50, 'Operating System', 100),
@@ -75,28 +75,26 @@ INSERT INTO DersKayitlari VALUES
 
 
 --3.1 ogrenci transkript raporu
-DECLARE @ogrenci_id INT = NULL --bir parametre(değişken) tanimlanir 
-
-SELECT O.ad, O.soyad, B.bolum_adi, D.ders_adi, N.vize, N.final,
-
+DECLARE @ogrenci_id INT = 1; 
+SELECT O.ad, O.soyad, B.bolum_adi, D.ders_adi,
+    ISNULL(CAST(N.vize AS VARCHAR), '-') AS vize,
+    ISNULL(CAST(N.final AS VARCHAR), '-') AS final,
 CASE 
-    WHEN N.vize IS NULL OR N.final IS NULL THEN NULL
-    ELSE (N.vize * 0.4 + N.final * 0.6)
-END AS ortalama,
-
-CASE
     WHEN N.vize IS NULL OR N.final IS NULL THEN 'NOT GIRILMEDI'
     WHEN (N.vize * 0.4 + N.final * 0.6) >= 50 THEN 'GECTI'
     ELSE 'KALDI'
-END AS durum
-
+END AS durum,
+CASE 
+    WHEN N.vize IS NULL OR N.final IS NULL THEN NULL
+    ELSE (N.vize * 0.4 + N.final * 0.6)
+END AS ortalama
 FROM Ogrenciler O
-
 JOIN Bolumler B ON B.bolum_id = O.bolum_id
 JOIN DersKayitlari DK ON DK.ogrenci_id = O.ogrenci_id
 JOIN Dersler D ON D.ders_id = DK.ders_id  
 LEFT JOIN Notlar N ON N.ogrenci_id = O.ogrenci_id AND N.ders_id = D.ders_id   --left join çünkü kayitli olmayan dersler de listelenecek  
-ORDER BY O.ogrenci_id, D.ders_id;
+WHERE O.ogrenci_id = @ogrenci_id
+ORDER BY D.ders_id;
 
 
 --3.2 bolum basari raporu
@@ -123,9 +121,9 @@ LEFT JOIN( --her ogrencinin ortalamasini hesapliyor
 ) T ON T.ogrenci_id = O.ogrenci_id 
 
 LEFT JOIN( --bolumun en yuksek ortalamasi
-    SELECT O2.ogrenci_id, MAX(T2.ogr_ortalama) AS max_ortalama
+    SELECT O2.bolum_id, MAX(T2.ogr_ortalama) AS max_ortalama
     FROM Ogrenciler O2
-    JOIN(
+    LEFT JOIN(
         SELECT ogrenci_id, AVG(vize * 0.4 + final * 0.6) AS ogr_ortalama
         FROM Notlar 
         GROUP BY ogrenci_id
@@ -148,7 +146,7 @@ CAST(SUM(
             WHEN(vize * 0.4 + final * 0.6) >= 50 THEN 1
             ELSE 0
         END
-    ) * 100.00 / COUNT(DISTINCT(DK.ogrenci_id)) AS DECIMAL(5, 2)) AS basari_orani --gecen ogrenci/toplam ogrenci * 100
+    ) * 100.00 / NULLIF(COUNT(DISTINCT(DK.ogrenci_id)), 0) AS DECIMAL(5, 2)) AS basari_orani --gecen ogrenci/toplam ogrenci * 100
 
 FROM Dersler D 
 LEFT JOIN DersKayitlari DK ON DK.ders_id = D.ders_id
@@ -186,10 +184,10 @@ GO
 
 --5 yazili olarak cevaplanacak sorular
 --1 Final notu olmayan ogrenci gecebilir mi?
---Final notu olmayan ogrenci ortalamasi yalnizca vize notuna göre hesaplanacagi icin 100 alsa dahi 40 puan getirisi olacak 40<50 den de kalmis olacak
+--SQL'de NULL ile yapılan matematiksel işlemlerin sonucu NULL döner. Not girişi tamamlanmadığı için hesaplanamaz
 
 --2 Hic ders almayan ogrenci raporlara dahil edilmeli mi? 
---Edilmemelidir çünkü derste kaydi yok notu yok, dahil edilmesinin hiçbir getirisi yok
+--Bölüm Başarı Raporu"nda toplam öğrenci sayısında görünmeli ama "Ders Analizi"nde görünmemelidir.
 
 --3 Ortalama hesaplamasi sorguda mi, view'da mi yapilmalidir? Neden?
 -- view tekrar tekrar kullanilan sorgulari tek bir yerde toblo gibi tutup kullanmamizi sağlar. Bu sorgu için de ortalama hesaplama kismini view olarak yazarsak 
@@ -204,4 +202,8 @@ SELECT O.ogrenci_id, O.ad, O.soyad, AVG(N.vize * 0.4 + N.final * 0.6) AS ortalam
 FROM Ogrenciler O
 JOIN Notlar N ON N.ogrenci_id = O.ogrenci_id
 JOIN DersKayitlari DK ON DK.ogrenci_id = O.ogrenci_id AND DK.ders_id = N.ders_id
-GROUP BY O.ad, O.soyad, O.ogrenci_id 
+GROUP BY O.ogrenci_id, O.ad, O.soyad
+
+CREATE INDEX IX_Notlar_OgrenciDers ON Notlar(ogrenci_id, ders_id);
+CREATE INDEX IX_DersKayit_OgrenciDers ON DersKayitlari(ogrenci_id, ders_id);
+--Index performans ve hizi maximize etmek icin kullanildi
