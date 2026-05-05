@@ -6,11 +6,11 @@ A collection of SQL-based projects developed during my internship, focusing on d
 
 ## Scope
 
-* Relational database design
+* Relational database design (normalization, relationships)
 * Triggers & stored procedures
-* Indexing & performance analysis
-* Data integrity and constraints
+* Indexing & query performance optimization
+* Data integrity, constraints, and validation logic
 
 ## Related Project
 
-🔗 Mini LMS (full-stack): https://github.com/Asyayla/MiniLMS-FullStack
+🔗 Mini LMS (full-stack): [View Project](https://github.com/Asyayla/MiniLMS-FullStack)
