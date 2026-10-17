@@ -1,16 +1,16 @@
 # Data Systems Internship
 
-A collection of SQL-based projects developed during my internship, focusing on database design, business logic, and performance optimization.
+A collection of SQL Server projects developed during my internship, focusing on database design, business logic, and performance optimization.
 
-> Note: Some parts of the codebase use Turkish naming and comments, reflecting real-world development in a local environment.
+> Note: Some object names and comments are in Turkish.
 
 ## Scope
 
 * Relational database design (normalization, relationships)
-* Triggers & stored procedures
-* Indexing & query performance optimization
+* Triggers and stored procedures
+* Indexing and query performance optimization
 * Data integrity, constraints, and validation logic
 
 ## Related Project
 
-🔗 Mini LMS (full-stack): [View Project](https://github.com/Asyayla/MiniLMS-FullStack)
+Mini LMS (full-stack): [MiniLMS-FullStack](https://github.com/Asyayla/MiniLMS-FullStack)
